@@ -24,6 +24,9 @@ class CoppeliaTFPublisher(Node):
         self.timer = self.create_timer(0.05, self.publish_transforms)
 
     def get_transform(self, child_handle, child_frame, parent_handle, parent_frame):
+        if not self.sim.isHandle(child_handle):
+            self.get_logger().warn("Invalid handle: {}".format(child_handle))
+
         pos = self.sim.getObjectPosition(child_handle, parent_handle)
         quat = self.sim.getObjectQuaternion(child_handle, parent_handle)
 
