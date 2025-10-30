@@ -37,6 +37,9 @@ class KinectDepthNode(Node):
         
         # Prepare info_msg with default settings
         self.populate_info_msg()
+
+        # Get camera parameters from Coppelia
+        self.retrieve_parameters()
         
         # Timer to publish kinect data every 10Hz
         self.timer_depth = self.create_timer(0.2, self.publish_camera_depth)
@@ -78,15 +81,19 @@ class KinectDepthNode(Node):
         # Publish the message
         self.camerainfo_publisher.publish(self.info_msg)
 
+
+    def retrieve_parameters(self):
+        self.resolution, self.nearClippingPlane = self.sim.getObjectFloatParameter(self.depthCam,self.sim.visionfloatparam_near_clipping)
+        self.resolution, self.farClippingPlane = self.sim.getObjectFloatParameter(self.depthCam,self.sim.visionfloatparam_far_clipping)
+
+        self.nearClippingPlane = self.nearClippingPlane*1000 # we want mm
+        self.farClippingPlane = self.farClippingPlane*1000 # we want mm
+
     def publish_camera_depth(self):
         # Get vision sensor RGB depth from CoppeliaSim
         data = self.sim.getVisionSensorDepthBuffer(self.depthCam+self.sim.handleflag_codedstring)
         
-        resolution, nearClippingPlane = self.sim.getObjectFloatParameter(self.depthCam,self.sim.visionfloatparam_near_clipping)
-        resolution, farClippingPlane = self.sim.getObjectFloatParameter(self.depthCam,self.sim.visionfloatparam_far_clipping)
-        nearClippingPlane = nearClippingPlane*1000 # we want mm
-        farClippingPlane = farClippingPlane*1000 # we want mm
-        data = self.sim.transformBuffer(data,self.sim.buffer_float,farClippingPlane-nearClippingPlane,nearClippingPlane,self.sim.buffer_uint16)
+        data = self.sim.transformBuffer(data,self.sim.buffer_float,self.farClippingPlane-self.nearClippingPlane,self.nearClippingPlane,self.sim.buffer_uint16)
         
         if data is not None:
             # Create image message

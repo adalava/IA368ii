@@ -27,31 +27,31 @@ def generate_launch_description():
             name='kinect_depth_node',
             output='screen'
         ),
-#        Node(
-#            package='ia368_pkg',
-#            executable='odom_node',
-#            name='odom_node',
-#            remappings=remappings,
-#            output='screen'
-#        ),
-#        Node(
-#            package='ia368_pkg',
-#            executable='tf_node_rtabmap_rgb',
-#            output='screen'
-#        ),
-#        Node(
-#            package='rtabmap_slam',
-#            executable='rtabmap',
-#            output='screen',
-#            parameters=parameters,
-#            arguments=['-d']
-#        ),
-#        Node(
-#            package='rtabmap_viz',
-#            executable='rtabmap_viz',
-#            output='screen',
-#            parameters=parameters
-#        ),
+        Node(
+            package='ia368_pkg',
+            executable='odom_node',
+            name='odom_node',
+            remappings=remappings,
+            output='screen'
+        ),
+        Node(
+            package='ia368_pkg',
+            executable='tf_node_rtabmap_rgb',
+            output='screen'
+        ),
+        Node(
+            package='rtabmap_slam',
+            executable='rtabmap',
+            output='screen',
+            parameters=parameters,
+            arguments=['-d']
+        ),
+        Node(
+            package='rtabmap_viz',
+            executable='rtabmap_viz',
+            output='screen',
+            parameters=parameters
+        ),
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
