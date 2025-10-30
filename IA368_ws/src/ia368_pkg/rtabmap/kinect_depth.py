@@ -1,4 +1,6 @@
 import numpy as np
+import cv2
+from cv_bridge import CvBridge
 
 import rclpy
 from rclpy.node import Node
@@ -8,14 +10,14 @@ from sensor_msgs.msg import RegionOfInterest
 # Coppelia ZeroMQ Remote API
 from coppeliasim_zmqremoteapi_client import RemoteAPIClient
 
-class KinectNode(Node):
+class KinectDepthNode(Node):
     info_msg = None
+    bridge = CvBridge()
 
     def __init__(self):
-        super().__init__('kinect_node')
+        super().__init__('kinect_depth_node')
         
         # Create publishers for kinect data
-        self.rgb_publisher = self.create_publisher(Image, '/rgb/image', 10)
         self.depth_publisher = self.create_publisher(Image, '/depth/image', 10)
         self.camerainfo_publisher = self.create_publisher(CameraInfo, '/rgb/camera_info', 10)
         
@@ -25,7 +27,6 @@ class KinectNode(Node):
             self.sim = self.client.getObject('sim')
             self.robotHandle = self.sim.getObject('/myRobot')
             self.depthCam=self.sim.getObject('/myRobot/kinect/depth')
-            self.colorCam=self.sim.getObject('/myRobot/kinect/rgb')
 
             self.sim.startSimulation()
 
@@ -38,12 +39,11 @@ class KinectNode(Node):
         self.populate_info_msg()
         
         # Timer to publish kinect data every 10Hz
-        self.timer_rgb = self.create_timer(0.1, self.publish_camera_rgb)
-        self.timer_depth = self.create_timer(0.1, self.publish_camera_depth)
-        self.timer_info = self.create_timer(0.1, self.publish_camera_info)
-        
-        self.get_logger().info('ROS2 → CoppeliaSim Kinect node started.')
-    
+        self.timer_depth = self.create_timer(0.2, self.publish_camera_depth)
+        self.timer_info = self.create_timer(0.2, self.publish_camera_info)
+
+        self.get_logger().info('ROS2 → CoppeliaSim Kinect depth node started.')
+
     def populate_info_msg(self):
         self.info_msg = CameraInfo()
         self.info_msg.roi = RegionOfInterest()
@@ -71,31 +71,13 @@ class KinectNode(Node):
         self.info_msg.roi.width = 0
         self.info_msg.roi.do_rectify = False     
 
-    def publish_camera_rgb(self):
-        #try:
-        # Get vision sensor RGB image from CoppeliaSim
-        data, resolution = self.sim.getVisionSensorImg(self.colorCam)
-        data = self.sim.transformImage(data,resolution,4)
-        
-        if data is not None:
-            # Create image message
-            rgb_msg = Image()
+    def publish_camera_info(self):
+        # Fill message
+        self.info_msg.header.stamp = self.get_clock().now().to_msg()
 
-            # Fill image data
-            rgb_msg.header.stamp = self.get_clock().now().to_msg()
-            rgb_msg.header.frame_id = "kinect"
-            rgb_msg.height = resolution[1]
-            rgb_msg.width = resolution[0]
-            rgb_msg.encoding = 'rgb8'
-            rgb_msg.is_bigendian = 1
-            rgb_msg.step = resolution[0]*3
-            rgb_msg.data = data
-            
-            # Publish the message
-            self.rgb_publisher.publish(rgb_msg)
-        else:
-            self.get_logger().warn('Kinect RGB image not found')
-    
+        # Publish the message
+        self.camerainfo_publisher.publish(self.info_msg)
+
     def publish_camera_depth(self):
         # Get vision sensor RGB depth from CoppeliaSim
         data = self.sim.getVisionSensorDepthBuffer(self.depthCam+self.sim.handleflag_codedstring)
@@ -125,16 +107,9 @@ class KinectNode(Node):
         else:
             self.get_logger().warn('Kinect depth image not found')
 
-    def publish_camera_info(self):
-        # Fill message
-        self.info_msg.header.stamp = self.get_clock().now().to_msg()
-
-        # Publish the message
-        self.camerainfo_publisher.publish(self.info_msg)
-
 def main(args=None):
     rclpy.init(args=args)
-    node = KinectNode()
+    node = KinectDepthNode()
     
     try:
         rclpy.spin(node)

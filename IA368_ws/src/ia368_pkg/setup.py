@@ -41,7 +41,8 @@ setup(
             "lidar_node = slam_toolbox.lidar:main",
             "tf_node_slam_toolbox = slam_toolbox.tf_node:main",
             "tf_node_rtabmap_rgb = rtabmap.tf_node:main",
-            "kinect_node_rtabmap_rgb = rtabmap.kinect:main",
+            "kinect_rgb_node_rtabmap_rgb = rtabmap.kinect_rgb:main",
+            "kinect_depth_node_rtabmap_rgb = rtabmap.kinect_depth:main",
         ],
     },
 )
